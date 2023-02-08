@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import withAuth from "../../common/hoc/withAuth";
 import { PageLayout } from "../../common/layouts/PageLayout";
 import axios from "../../lib/axios";
+import { useStore } from "../../utils/store";
 
 const ViewJobPage = () => {
   const router = useRouter();
@@ -24,6 +25,8 @@ const ViewJobPage = () => {
     score: "",
     isLoading: false,
   });
+
+  const { user } = useStore();
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -42,8 +45,6 @@ const ViewJobPage = () => {
   useEffect(() => {
     if (jobId) fetchjob();
   }, [jobId]);
-
-  console.log({ job });
 
   if (!job) return <></>;
 
@@ -74,7 +75,11 @@ const ViewJobPage = () => {
     });
   }
 
-  console.log({ file });
+  async function handleJobApply() {
+    const res = await axios.post(`/job/apply/${jobId}`, {
+      _id: user._id,
+    });
+  }
 
   return (
     <PageLayout className="grid gap-5">
@@ -99,7 +104,7 @@ const ViewJobPage = () => {
         </h6>
       </div>
 
-      <div>
+      <div className="w-full flex flex-col items-start gap-5">
         {similarityObj.score ? (
           <p className="text-lg font-semibold">
             Your resume matches about {similarityObj.score} of the job
@@ -110,6 +115,8 @@ const ViewJobPage = () => {
             Check the Job similarity with your resume
           </Button>
         )}
+
+        <Button onClick={handleJobApply}>Apply</Button>
       </div>
 
       <div className="grid gap-4">

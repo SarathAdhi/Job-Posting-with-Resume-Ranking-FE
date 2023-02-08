@@ -1,4 +1,5 @@
 import {
+  Button,
   Divider,
   FormControl,
   InputLabel,
@@ -10,6 +11,7 @@ import {
 import { Stack } from "@mui/system";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import { v4 } from "uuid";
 import Form from "../../common/components/Form";
 import { PageLayout } from "../../common/layouts/PageLayout";
@@ -21,7 +23,8 @@ const initialUserValues = {
   name: "",
   email: "",
   password: "",
-  isRecruiter: true,
+  isRecruiter: false,
+  resume: "",
 };
 
 const initialCompanyValues = {
@@ -40,6 +43,7 @@ const RegisterPage = () => {
 
   const [userDetails, setUserDetails] = useState(initialUserValues);
   const [companyDetails, setCompanyDetails] = useState(initialCompanyValues);
+  const [file, setFile] = useState(null);
 
   const { user } = useStore();
 
@@ -48,8 +52,12 @@ const RegisterPage = () => {
   async function handleFormSubmit(e) {
     e.preventDefault();
 
-    const res = await axios.post("/auth/register", {
-      uuid: v4(),
+    if (!file) return toast.error("Upload your resume");
+
+    const _uuid = v4();
+
+    await axios.post("/auth/register", {
+      uuid: _uuid,
       ...userDetails,
       company: !userDetails.isRecruiter
         ? null
@@ -59,7 +67,17 @@ const RegisterPage = () => {
           },
     });
 
-    router.replace("/auth/login");
+    let formData = new FormData();
+    formData.append("resume", file);
+    formData.append("uuid", _uuid);
+
+    await axios.post("/upload/resume", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    // router.replace("/auth/login");
 
     setUserDetails(initialUserValues);
     setCompanyDetails(initialCompanyValues);
@@ -149,6 +167,15 @@ const RegisterPage = () => {
             }
             required
           />
+
+          <Button variant="outlined" component="Resume">
+            <input
+              type="file"
+              name="resume"
+              onChange={(e) => setFile(e.target.files[0])}
+              required
+            />
+          </Button>
         </Form.Grid>
 
         {isRecruiter && (
